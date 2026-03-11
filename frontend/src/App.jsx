@@ -1,3 +1,10 @@
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = "https://ubtvayptoyemjelsnefa.supabase.co";
+const supabaseKey = "sb_publishable_KGVBJlSXA-IqRXmpcLTxPg_yvCc24xO";
+
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
 import { useState } from 'react';
 import axios from 'axios';
 import IdeaInput from './components/IdeaInput';
@@ -14,6 +21,24 @@ const TABS = [
   { id: 'roadmap',    label: 'Execution Plan',  icon: '◎' },
   { id: 'chat',       label: 'AI Advisor',      icon: '⬟' },
 ];
+async function saveMessage(role, text) {
+
+ await supabase
+  .from("messages")
+  .insert([
+   { role: role, content: text }
+  ]);
+
+}
+async function loadMessages(){
+
+ const { data } = await supabase
+  .from("messages")
+  .select("*")
+  .order("created_at");
+
+ console.log(data);
+}
 
 function LoadingScreen() {
   return (
