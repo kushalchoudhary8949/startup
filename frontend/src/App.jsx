@@ -24,7 +24,7 @@ const TABS = [
 async function saveMessage(role, text) {
 
  await supabase
-  .from("messages")
+  .from("startup-detector")
   .insert([
    { role: role, content: text }
   ]);
