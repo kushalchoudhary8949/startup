@@ -1,9 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = "https://ubtvayptoyemjelsnefa.supabase.co";
-const supabaseKey = "sb_publishable_KGVBJlSXA-IqRXmpcLTxPg_yvCc24xO";
-
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+ 
 
 import { useState } from 'react';
 import axios from 'axios';
