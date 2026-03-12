@@ -4,9 +4,13 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import analyzeRoutes from "./routes/analyze.js";
+import connectDB from "./config/db.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Connect to Database
+connectDB();
 
 // Check if Groq API key is loaded
 if (!process.env.GROQ_API_KEY) {
@@ -34,6 +38,10 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;

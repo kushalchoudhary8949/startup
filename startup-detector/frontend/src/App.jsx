@@ -1,3 +1,5 @@
+ 
+
 import { useState } from 'react';
 import axios from 'axios';
 import IdeaInput from './components/IdeaInput';
@@ -6,6 +8,7 @@ import CompetitorList from './components/CompetitorList';
 import MVPPlan from './components/MVPPlan';
 import AIChatBox from './components/AIChatBox';
 import ExecutionRoadmap from './components/ExecutionRoadmap';
+import HistoryPanel from './components/HistoryPanel';
 
 const TABS = [
   { id: 'analysis',   label: 'Idea Analysis',  icon: '◈' },
@@ -14,6 +17,24 @@ const TABS = [
   { id: 'roadmap',    label: 'Execution Plan',  icon: '◎' },
   { id: 'chat',       label: 'AI Advisor',      icon: '⬟' },
 ];
+async function saveMessage(role, text) {
+
+ await supabase
+  .from("startup-detector")
+  .insert([
+   { role: role, content: text }
+  ]);
+
+}
+async function loadMessages(){
+
+ const { data } = await supabase
+  .from("messages")
+  .select("*")
+  .order("created_at");
+
+ console.log(data);
+}
 
 function LoadingScreen() {
   return (
@@ -46,11 +67,16 @@ export default function App() {
   const [activeTab, setActiveTab]       = useState('analysis');
   const [analyzedIdea, setAnalyzedIdea] = useState('');
 
+  const [showHistory, setShowHistory]   = useState(false);
+  const [isSaving, setIsSaving]         = useState(false);
+  const [saveSuccess, setSaveSuccess]   = useState(false);
+
   const handleAnalyze = async (idea) => {
     setLoading(true);
     setError('');
     setResult(null);
     setAnalyzedIdea(idea);
+    setSaveSuccess(false);
     try {
       const { data } = await axios.post('/api/analyze', { idea });
       setResult(data);
@@ -74,6 +100,32 @@ export default function App() {
     core_features: result.mvp_plan?.core_features,
   } : null;
 
+  const handleSaveIdea = async () => {
+    if (!result || !analyzedIdea) return;
+    setIsSaving(true);
+    try {
+      await axios.post('/api/save', {
+        ideaText: analyzedIdea,
+        analysis: result.analysis,
+        competitors: result.competitors,
+        mvp_plan: result.mvp_plan
+      });
+      setSaveSuccess(true);
+    } catch (err) {
+      alert("Failed to save idea. Is the database connected?");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLoadIdea = (analysis, competitors, mvp_plan, ideaText) => {
+    setResult({ analysis, competitors, mvp_plan });
+    setAnalyzedIdea(ideaText);
+    setActiveTab('analysis');
+    setSaveSuccess(true);
+    setShowHistory(false);
+  };
+
   return (
     <div className="relative min-h-screen" style={{ zIndex: 1 }}>
       {/* Background blobs */}
@@ -83,6 +135,16 @@ export default function App() {
       </div>
 
       <div className="relative max-w-3xl mx-auto px-4 py-12 sm:py-16">
+        {/* Top Right Actions */}
+        <div className="absolute top-4 right-4 sm:top-8 sm:right-8 z-10">
+          <button 
+            onClick={() => setShowHistory(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all duration-200 border border-[rgba(255,255,255,0.05)] hover:border-[rgba(99,255,190,0.3)] bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(99,255,190,0.05)] text-gray-300"
+          >
+            <span style={{ color: 'var(--accent)' }}>✦</span> History
+          </button>
+        </div>
+
         {/* Hero header */}
         <div className="text-center mb-12 slide-up">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6" style={{ background: 'rgba(99,255,190,0.1)', border: '1px solid rgba(99,255,190,0.2)' }}>
@@ -119,9 +181,25 @@ export default function App() {
         {result && !loading && (
           <div>
             {/* Analyzed idea pill */}
-            <div className="mb-5 flex items-center gap-2 px-4 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: "'Syne', sans-serif", fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Idea</span>
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{analyzedIdea}</span>
+            <div className="mb-5 flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[rgba(255,255,255,0.03)]">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: "'Syne', sans-serif", fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Idea</span>
+                <span className="truncate" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{analyzedIdea}</span>
+              </div>
+              
+              <button
+                onClick={handleSaveIdea}
+                disabled={isSaving || saveSuccess}
+                className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200"
+                style={{
+                  background: saveSuccess ? 'rgba(99,255,190,0.1)' : 'rgba(123,108,255,0.1)',
+                  color: saveSuccess ? '#63ffbc' : '#a99fff',
+                  border: `1px solid ${saveSuccess ? 'rgba(99,255,190,0.2)' : 'rgba(123,108,255,0.2)'}`,
+                  cursor: (isSaving || saveSuccess) ? 'default' : 'pointer'
+                }}
+              >
+                {isSaving ? 'Saving...' : saveSuccess ? '✓ Saved' : '+ Save'}
+              </button>
             </div>
 
             {/* Tabs */}
@@ -192,6 +270,8 @@ export default function App() {
           </div>
         )}
       </div>
+      
+      {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} onLoadIdea={handleLoadIdea} />}
     </div>
   );
 }
