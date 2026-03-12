@@ -4,9 +4,13 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import analyzeRoutes from "./routes/analyze.js";
+import connectDB from "./config/db.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Connect to Database
+connectDB();
 
 // Check if Groq API key is loaded
 if (!process.env.GROQ_API_KEY) {
