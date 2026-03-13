@@ -17,25 +17,6 @@ const TABS = [
   { id: 'roadmap',    label: 'Execution Plan',  icon: '◎' },
   { id: 'chat',       label: 'AI Advisor',      icon: '⬟' },
 ];
-async function saveMessage(role, text) {
-
- await supabase
-  .from("startup-detector")
-  .insert([
-   { role: role, content: text }
-  ]);
-
-}
-async function loadMessages(){
-
- const { data } = await supabase
-  .from("messages")
-  .select("*")
-  .order("created_at");
-
- console.log(data);
-}
-
 function LoadingScreen() {
   return (
     <div className="flex flex-col items-center justify-center py-24 gap-6">
