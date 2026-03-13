@@ -1,7 +1,6 @@
 # Environment variables (API keys, secrets)
 .env
 backend/.env
-frontend/.env
 
 # Node modules (very large, auto-installed)
 node_modules
