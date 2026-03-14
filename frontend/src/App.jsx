@@ -104,7 +104,7 @@ export default function App() {
     if (!result || !analyzedIdea) return;
     setIsSaving(true);
     try {
-      await axios.post('/api/save', {
+     await axios.post('https://startup-backend.onrender.com/api/save', {
         ideaText: analyzedIdea,
         analysis: result.analysis,
         competitors: result.competitors,
